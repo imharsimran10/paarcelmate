@@ -131,7 +131,7 @@ export class DeliveryService {
       },
     });
 
-    // Create or update payment record to COMPLETED
+    // Create or update payment record to RELEASED
     const payment = await this.prisma.payment.findUnique({
       where: { parcelId },
     });
@@ -140,7 +140,7 @@ export class DeliveryService {
       await this.prisma.payment.update({
         where: { parcelId },
         data: {
-          status: 'COMPLETED',
+          status: 'RELEASED',
           fullyReleasedAt: now,
         },
       });
@@ -156,7 +156,7 @@ export class DeliveryService {
       },
       payment: payment ? {
         amount: payment.totalAmount,
-        status: 'COMPLETED',
+        status: 'RELEASED',
       } : null,
     };
   }
