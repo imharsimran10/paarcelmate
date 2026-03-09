@@ -31,7 +31,8 @@
       "Bash(Get-Content \"C:\\\\Users\\\\HARSIM~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-HarsimranSingh-Personal-Projects-P2P-App-v3\\\\tasks\\\\b7feebf.output\" -Tail 30)",
       "Bash(cd:*)",
       "Bash(timeout /t 1)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)"
     ]
   }
 }

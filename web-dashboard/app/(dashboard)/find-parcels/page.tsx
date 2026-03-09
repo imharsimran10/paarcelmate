@@ -13,6 +13,44 @@ import { Parcel } from '@/types';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { statesByCountry } from '@/lib/location-data';
+
+// Helper function to extract city from address by matching against known cities
+const extractCityFromAddress = (address: string): string => {
+  if (!address) return '';
+
+  const parts = address.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Get all known cities from all countries
+  const allCities = new Set<string>();
+  Object.values(statesByCountry).forEach(states => {
+    states.forEach(state => {
+      state.cities.forEach(city => allCities.add(city));
+    });
+  });
+
+  // Find the first part that matches a known city
+  for (const part of parts) {
+    if (allCities.has(part)) {
+      return part;
+    }
+  }
+
+  // Fallback: if no known city found, try to extract based on position
+  // Format is typically: [Street,] City, State, Country
+  // So city is either index 0 (no street) or index 1 (with street)
+  if (parts.length >= 3) {
+    // If we have at least 3 parts and first part doesn't look like a street number
+    // (streets usually start with numbers), then first part is likely the city
+    if (parts.length === 3 || !/^\d/.test(parts[0])) {
+      return parts[0];
+    }
+    // Otherwise, second part is likely the city
+    return parts[1] || parts[0];
+  }
+
+  return parts[0] || '';
+};
 
 export default function FindParcelsPage() {
   const [parcels, setParcels] = useState<Parcel[]>([]);
@@ -52,13 +90,9 @@ export default function FindParcelsPage() {
         const originAddress = (firstTrip as any).originAddress || firstTrip.origin?.address || '';
         const destAddress = (firstTrip as any).destAddress || firstTrip.destination?.address || '';
 
-        // Extract city from address (format: "Street, City, State, Country" or "City, State, Country")
-        const originParts = originAddress.split(',').map((s: string) => s.trim()).filter(Boolean);
-        const destParts = destAddress.split(',').map((s: string) => s.trim()).filter(Boolean);
-
-        // If 4 parts (with street), city is at index 1; if 3 parts (no street), city is at index 0
-        const origin = originParts.length >= 4 ? originParts[1] : (originParts.length >= 3 ? originParts[0] : originParts[0] || '');
-        const dest = destParts.length >= 4 ? destParts[1] : (destParts.length >= 3 ? destParts[0] : destParts[0] || '');
+        // Extract city from address using helper function
+        const origin = extractCityFromAddress(originAddress);
+        const dest = extractCityFromAddress(destAddress);
 
         if (origin) setOriginFilter(origin);
         if (dest) setDestFilter(dest);
