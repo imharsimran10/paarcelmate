@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
 import { PrismaService } from './common/services/prisma.service';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -22,8 +23,15 @@ async function bootstrap() {
   );
 
   // CORS Configuration
+  const isProduction = configService.get('NODE_ENV') === 'production';
+  const corsOrigins = configService.get('CORS_ORIGINS');
+
+  if (isProduction && !corsOrigins) {
+    throw new Error('CORS_ORIGINS must be configured in production');
+  }
+
   app.enableCors({
-    origin: configService.get('CORS_ORIGINS')?.split(',') || '*',
+    origin: corsOrigins ? corsOrigins.split(',').map(o => o.trim()) : (isProduction ? [] : '*'),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -48,6 +56,9 @@ async function bootstrap() {
       },
     }),
   );
+
+  // Global exception filter for production error sanitization
+  app.useGlobalFilters(new HttpExceptionFilter(configService));
 
   // Prisma shutdown hook
   const prismaService = app.get(PrismaService);

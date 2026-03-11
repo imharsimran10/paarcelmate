@@ -1,5 +1,6 @@
 import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { OtpService } from './otp.service';
 import { RegisterDto } from './dto/register.dto';
@@ -17,6 +18,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User successfully registered' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -25,6 +27,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'User successfully logged in' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
@@ -52,6 +55,7 @@ export class AuthController {
   }
 
   @Post('send-otp')
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute to prevent spam
   @ApiOperation({ summary: 'Send OTP for email or phone verification' })
   @ApiResponse({ status: 200, description: 'OTP sent successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -68,6 +72,7 @@ export class AuthController {
   }
 
   @Post('verify-otp')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @ApiOperation({ summary: 'Verify OTP for email or phone' })
   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired OTP' })

@@ -6,10 +6,31 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: (origin, callback) => {
+      const configService = new ConfigService();
+      const corsOrigins = configService.get('CORS_ORIGINS');
+      const isProduction = configService.get('NODE_ENV') === 'production';
+
+      if (!isProduction) {
+        // Allow all origins in development
+        callback(null, true);
+      } else if (corsOrigins) {
+        // Check if origin is in allowed list
+        const allowedOrigins = corsOrigins.split(',').map(o => o.trim());
+        if (allowedOrigins.includes(origin) || !origin) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      } else {
+        callback(new Error('CORS not configured'));
+      }
+    },
+    credentials: true,
   },
 })
 export class TrackingGateway {

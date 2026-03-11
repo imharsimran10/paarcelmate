@@ -1,9 +1,11 @@
-import { Injectable, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DeliveryService {
+  private readonly logger = new Logger(DeliveryService.name);
+
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
@@ -53,16 +55,16 @@ export class DeliveryService {
     // In development, log OTP to console
     const isDevelopment = this.config.get('NODE_ENV') === 'development';
     if (isDevelopment) {
-      console.log('\n' + '='.repeat(60));
-      console.log(`📦 DELIVERY OTP FOR PARCEL: ${parcel.title}`);
-      console.log(`📞 Recipient: ${parcel.recipientName} (${parcel.recipientPhone})`);
-      console.log(`🔐 OTP CODE: ${otp}`);
-      console.log(`⏰ Valid for: 10 minutes`);
-      console.log('='.repeat(60) + '\n');
+      this.logger.debug('='.repeat(60));
+      this.logger.debug(`📦 DELIVERY OTP FOR PARCEL: ${parcel.title}`);
+      this.logger.debug(`📞 Recipient: ${parcel.recipientName} (${parcel.recipientPhone})`);
+      this.logger.debug(`🔐 OTP CODE: ${otp}`);
+      this.logger.debug(`⏰ Valid for: 10 minutes`);
+      this.logger.debug('='.repeat(60));
     }
 
-    // TODO: In production, send SMS/Email to recipient
-    // await this.sendDeliveryOTP(parcel.recipientPhone, parcel.recipientEmail, otp);
+    // TODO: In production, send SMS/Email to recipient with delivery OTP
+    // Consider using Resend for email or Twilio for SMS
 
     return {
       message: 'Delivery OTP generated and sent to recipient',
