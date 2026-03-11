@@ -17,6 +17,14 @@ export class OtpService {
     // Initialize Resend
     const resendApiKey = this.config.get<string>('RESEND_API_KEY');
     if (resendApiKey) {
+      // Fix for Windows SSL certificate verification issue
+      // Only disable SSL verification in development on Windows
+      const isDevelopment = this.config.get('NODE_ENV') === 'development';
+      if (isDevelopment && process.platform === 'win32') {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+        this.logger.warn('SSL certificate verification disabled for development on Windows');
+      }
+
       this.resend = new Resend(resendApiKey);
       this.logger.log('Resend email service initialized');
     } else {

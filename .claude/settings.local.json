@@ -35,7 +35,11 @@
       "Bash(git push:*)",
       "Bash(git commit:*)",
       "Bash(xargs rm:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(for i in {1..4})",
+      "Bash(do echo \"Request $i:\")",
+      "Bash(done)",
+      "Bash(node:*)"
     ]
   }
 }
