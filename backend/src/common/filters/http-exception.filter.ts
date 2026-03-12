@@ -28,6 +28,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let message = 'Internal server error';
     let error: string | object = 'Internal Server Error';
 
+    let validationErrors: any = undefined;
+
     // Handle HttpException
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -38,6 +40,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         message = (exceptionResponse as any).message || message;
         error = (exceptionResponse as any).error || error;
+        // Capture validation errors if present
+        if ((exceptionResponse as any).errors) {
+          validationErrors = (exceptionResponse as any).errors;
+        }
       }
     } else if (exception instanceof Error) {
       message = exception.message;
@@ -62,6 +68,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (!isProduction) {
       errorResponse.message = message;
       errorResponse.error = error;
+      if (validationErrors) {
+        errorResponse.errors = validationErrors;
+      }
       if (exception instanceof Error && exception.stack) {
         errorResponse.stack = exception.stack.split('\n');
       }
@@ -73,6 +82,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       } else {
         errorResponse.message = message;
         errorResponse.error = error;
+        if (validationErrors) {
+          errorResponse.errors = validationErrors;
+        }
       }
     }
 

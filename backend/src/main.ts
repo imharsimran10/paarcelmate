@@ -54,6 +54,20 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      exceptionFactory: (errors) => {
+        const messages = errors.map(error => {
+          const constraints = error.constraints || {};
+          return {
+            field: error.property,
+            errors: Object.values(constraints),
+          };
+        });
+        return new (require('@nestjs/common').BadRequestException)({
+          statusCode: 400,
+          message: 'Validation failed',
+          errors: messages,
+        });
+      },
     }),
   );
 

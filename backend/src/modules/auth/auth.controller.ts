@@ -56,32 +56,24 @@ export class AuthController {
 
   @Post('send-otp')
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute to prevent spam
-  @ApiOperation({ summary: 'Send OTP for email or phone verification' })
+  @ApiOperation({ summary: 'Send OTP for email verification' })
   @ApiResponse({ status: 200, description: 'OTP sent successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async sendOtp(@Body() sendOtpDto: SendOtpDto) {
-    const identifier = sendOtpDto.type === 'email' ? sendOtpDto.email : sendOtpDto.phone;
-    if (!identifier) {
-      throw new Error(`${sendOtpDto.type} is required`);
-    }
-    await this.otpService.sendOtp(identifier, sendOtpDto.type);
+    await this.otpService.sendOtp(sendOtpDto.email);
     return {
       success: true,
-      message: `OTP sent to ${sendOtpDto.type}`,
+      message: 'OTP sent to email',
     };
   }
 
   @Post('verify-otp')
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
-  @ApiOperation({ summary: 'Verify OTP for email or phone' })
+  @ApiOperation({ summary: 'Verify OTP for email' })
   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired OTP' })
   async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
-    const identifier = verifyOtpDto.type === 'email' ? verifyOtpDto.email : verifyOtpDto.phone;
-    if (!identifier) {
-      throw new Error(`${verifyOtpDto.type} is required`);
-    }
-    const isValid = await this.otpService.verifyOtp(identifier, verifyOtpDto.type, verifyOtpDto.otp);
+    const isValid = await this.otpService.verifyOtp(verifyOtpDto.email, verifyOtpDto.otp);
     return {
       success: isValid,
       message: 'OTP verified successfully',

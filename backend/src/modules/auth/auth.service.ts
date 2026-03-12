@@ -26,6 +26,17 @@ export class AuthService {
       throw new ConflictException('Email is already registered. Please login instead.');
     }
 
+    // Check if phone is already registered (if provided)
+    if (phone) {
+      const existingPhone = await this.prisma.user.findUnique({
+        where: { phone },
+      });
+
+      if (existingPhone) {
+        throw new ConflictException('Phone number is already registered. Please use a different phone number or leave it empty.');
+      }
+    }
+
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -36,7 +47,7 @@ export class AuthService {
         passwordHash,
         firstName,
         lastName,
-        phone,
+        phone: phone || null, // Set to null if not provided
       },
       select: {
         id: true,

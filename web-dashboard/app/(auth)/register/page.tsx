@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api';
 import { toast } from 'sonner';
-import { CheckCircle2, Mail, Phone } from 'lucide-react';
+import { CheckCircle2, Mail } from 'lucide-react';
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -23,7 +23,7 @@ const registerSchema = z.object({
   confirmPassword: z.string(),
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-  phone: z.string().min(10, 'Phone number must be at least 10 digits'),
+  phone: z.string().min(10, 'Phone number must be at least 10 digits').optional().or(z.literal('')),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
@@ -31,7 +31,7 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-type Step = 'details' | 'verify-email' | 'verify-phone' | 'complete';
+type Step = 'details' | 'verify-email' | 'complete';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -40,9 +40,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState<Step>('details');
   const [formData, setFormData] = useState<RegisterFormData | null>(null);
   const [emailOtp, setEmailOtp] = useState('');
-  const [phoneOtp, setPhoneOtp] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
 
   const {
     register,
@@ -54,7 +52,6 @@ export default function RegisterPage() {
   });
 
   const watchEmail = watch('email');
-  const watchPhone = watch('phone');
 
   const onSubmitDetails = async (data: RegisterFormData) => {
     setFormData(data);
@@ -64,7 +61,6 @@ export default function RegisterPage() {
       setIsLoading(true);
       await api.post('/auth/send-otp', {
         email: data.email,
-        type: 'email',
       });
       toast.success('OTP sent to your email');
       setStep('verify-email');
@@ -85,39 +81,9 @@ export default function RegisterPage() {
       await api.post('/auth/verify-otp', {
         email: formData.email,
         otp: emailOtp,
-        type: 'email',
       });
       setEmailVerified(true);
       toast.success('Email verified successfully');
-
-      // Now send phone OTP
-      await api.post('/auth/send-otp', {
-        phone: formData.phone,
-        type: 'phone',
-      });
-      toast.success('OTP sent to your phone');
-      setStep('verify-phone');
-    } catch (err) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || 'Invalid OTP. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const verifyPhoneOtp = async () => {
-    if (!formData) return;
-    setIsLoading(true);
-    setError('');
-
-    try {
-      await api.post('/auth/verify-otp', {
-        phone: formData.phone,
-        otp: phoneOtp,
-        type: 'phone',
-      });
-      setPhoneVerified(true);
-      toast.success('Phone verified successfully');
 
       // Now register the user
       const { confirmPassword, ...registerData } = formData;
@@ -135,16 +101,15 @@ export default function RegisterPage() {
     }
   };
 
-  const resendOtp = async (type: 'email' | 'phone') => {
+  const resendOtp = async () => {
     if (!formData) return;
     setIsLoading(true);
 
     try {
       await api.post('/auth/send-otp', {
-        [type]: type === 'email' ? formData.email : formData.phone,
-        type,
+        email: formData.email,
       });
-      toast.success(`OTP resent to your ${type}`);
+      toast.success('OTP resent to your email');
     } catch (err) {
       toast.error('Failed to resend OTP');
     } finally {
@@ -159,7 +124,6 @@ export default function RegisterPage() {
         <CardDescription className="text-center">
           {step === 'details' && 'Enter your details to get started'}
           {step === 'verify-email' && 'Verify your email address'}
-          {step === 'verify-phone' && 'Verify your phone number'}
           {step === 'complete' && 'Registration complete!'}
         </CardDescription>
 
@@ -169,10 +133,7 @@ export default function RegisterPage() {
             1. Details
           </Badge>
           <Badge variant={step === 'verify-email' ? 'default' : emailVerified ? 'default' : 'secondary'}>
-            2. Email {emailVerified && <CheckCircle2 className="ml-1 h-3 w-3" />}
-          </Badge>
-          <Badge variant={step === 'verify-phone' ? 'default' : phoneVerified ? 'default' : 'secondary'}>
-            3. Phone {phoneVerified && <CheckCircle2 className="ml-1 h-3 w-3" />}
+            2. Verify Email {emailVerified && <CheckCircle2 className="ml-1 h-3 w-3" />}
           </Badge>
         </div>
       </CardHeader>
@@ -220,7 +181,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone">Phone Number (Optional)</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -230,7 +191,7 @@ export default function RegisterPage() {
               {errors.phone && (
                 <p className="text-sm text-destructive">{errors.phone.message}</p>
               )}
-              <p className="text-xs text-muted-foreground">Include country code (e.g., +91 for India)</p>
+              <p className="text-xs text-muted-foreground">Optional. Include country code if provided (e.g., +91 for India)</p>
             </div>
 
             <div className="space-y-2">
@@ -306,13 +267,13 @@ export default function RegisterPage() {
               onClick={verifyEmailOtp}
               disabled={isLoading || emailOtp.length !== 6}
             >
-              {isLoading ? 'Verifying...' : 'Verify Email'}
+              {isLoading ? 'Verifying...' : 'Verify Email & Complete Registration'}
             </Button>
 
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => resendOtp('email')}
+              onClick={() => resendOtp()}
               disabled={isLoading}
             >
               Resend OTP
@@ -328,53 +289,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* Step 3: Verify phone OTP */}
-        {step === 'verify-phone' && formData && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-2 p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-              <Phone className="h-5 w-5 text-green-600" />
-              <p className="text-sm text-green-600">
-                OTP sent to <strong>{formData.phone}</strong>
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phoneOtp">Enter Phone OTP</Label>
-              <Input
-                id="phoneOtp"
-                placeholder="123456"
-                value={phoneOtp}
-                onChange={(e) => setPhoneOtp(e.target.value)}
-                maxLength={6}
-              />
-            </div>
-
-            {error && (
-              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                {error}
-              </div>
-            )}
-
-            <Button
-              className="w-full"
-              onClick={verifyPhoneOtp}
-              disabled={isLoading || phoneOtp.length !== 6}
-            >
-              {isLoading ? 'Verifying...' : 'Verify Phone & Complete'}
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => resendOtp('phone')}
-              disabled={isLoading}
-            >
-              Resend OTP
-            </Button>
-          </div>
-        )}
-
-        {/* Step 4: Complete */}
+        {/* Step 3: Complete */}
         {step === 'complete' && (
           <div className="text-center space-y-4 py-8">
             <div className="flex justify-center">
