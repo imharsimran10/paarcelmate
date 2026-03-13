@@ -30,11 +30,13 @@ export class CreateParcelDto {
 
   @ApiProperty({ example: 40.7128 })
   @IsNumber()
-  pickupLat: number;
+  @IsOptional()
+  pickupLat?: number;
 
   @ApiProperty({ example: -74.006 })
   @IsNumber()
-  pickupLng: number;
+  @IsOptional()
+  pickupLng?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -52,11 +54,13 @@ export class CreateParcelDto {
 
   @ApiProperty({ example: 42.3601 })
   @IsNumber()
-  deliveryLat: number;
+  @IsOptional()
+  deliveryLat?: number;
 
   @ApiProperty({ example: -71.0589 })
   @IsNumber()
-  deliveryLng: number;
+  @IsOptional()
+  deliveryLng?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()

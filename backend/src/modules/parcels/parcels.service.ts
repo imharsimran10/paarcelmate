@@ -9,10 +9,16 @@ export class ParcelsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, createParcelDto: CreateParcelDto) {
+    // TODO: Implement proper geocoding for addresses
+    // For now, use provided coordinates or default to 0,0
     const parcel = await this.prisma.parcel.create({
       data: {
         senderId: userId,
         ...createParcelDto,
+        pickupLat: createParcelDto.pickupLat ?? 0,
+        pickupLng: createParcelDto.pickupLng ?? 0,
+        deliveryLat: createParcelDto.deliveryLat ?? 0,
+        deliveryLng: createParcelDto.deliveryLng ?? 0,
         pickupTimeStart: new Date(createParcelDto.pickupTimeStart),
         pickupTimeEnd: new Date(createParcelDto.pickupTimeEnd),
         deliveryTimeStart: createParcelDto.deliveryTimeStart

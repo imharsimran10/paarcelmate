@@ -31,20 +31,22 @@ export class TripsService {
       transportMode,
     } = createTripDto;
 
+    // TODO: Implement proper geocoding for addresses
+    // For now, use provided coordinates or default to 0,0
     const trip = await this.prisma.trip.create({
       data: {
         userId,
         originAddress,
-        originLat,
-        originLng,
+        originLat: originLat ?? 0,
+        originLng: originLng ?? 0,
         originPlaceId,
         destAddress,
-        destLat,
-        destLng,
+        destLat: destLat ?? 0,
+        destLng: destLng ?? 0,
         destPlaceId,
         departureTime: new Date(departureTime),
         arrivalTime: arrivalTime ? new Date(arrivalTime) : null,
-        flexibility,
+        flexibility: flexibility ?? 0,
         maxParcels,
         maxWeight,
         acceptedSizes,

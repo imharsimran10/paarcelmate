@@ -17,11 +17,13 @@ export class CreateTripDto {
 
   @ApiProperty({ example: 40.7128 })
   @IsNumber()
-  originLat: number;
+  @IsOptional()
+  originLat?: number;
 
   @ApiProperty({ example: -74.006 })
   @IsNumber()
-  originLng: number;
+  @IsOptional()
+  originLng?: number;
 
   @ApiProperty({ example: 'ChIJOwg_06VPwokRYv534QaPC8g', required: false })
   @IsOptional()
@@ -34,11 +36,13 @@ export class CreateTripDto {
 
   @ApiProperty({ example: 37.7749 })
   @IsNumber()
-  destLat: number;
+  @IsOptional()
+  destLat?: number;
 
   @ApiProperty({ example: -122.4194 })
   @IsNumber()
-  destLng: number;
+  @IsOptional()
+  destLng?: number;
 
   @ApiProperty({ example: 'ChIJIQBpAG2ahYAR_6128GcTUEo', required: false })
   @IsOptional()
