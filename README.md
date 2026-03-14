@@ -1,4 +1,4 @@
-# PaarcelMate - P2P Parcel Delivery Platform
+# PaarcelMate - Peer-to-Peer Parcel Delivery Platform
 
 A production-ready peer-to-peer parcel delivery platform connecting travelers with senders for fast, affordable package delivery.
 

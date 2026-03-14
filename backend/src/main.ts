@@ -82,7 +82,7 @@ async function bootstrap() {
   if (configService.get('NODE_ENV') !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('PaarcelMate API')
-      .setDescription('P2P Parcel Delivery Platform API Documentation')
+      .setDescription('PaarcelMate - Peer-to-Peer Parcel Delivery Platform API')
       .setVersion('1.0')
       .addBearerAuth()
       .addTag('auth', 'Authentication endpoints')

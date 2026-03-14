@@ -60,7 +60,7 @@ export default function Sidebar() {
         )}
       >
         <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
-          <span className="text-xl font-bold text-primary">P2P Delivery</span>
+          <span className="text-xl font-bold text-primary">PaarcelMate</span>
           <button
             onClick={() => setSidebarOpen(false)}
             className="rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -120,7 +120,7 @@ export default function Sidebar() {
         <div className="flex flex-col flex-grow border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto">
           <div className="flex h-16 items-center px-4 border-b border-gray-200 dark:border-gray-700">
             <Link href="/" className="text-xl font-bold text-primary">
-              P2P Delivery
+              PaarcelMate
             </Link>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">

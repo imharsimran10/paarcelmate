@@ -15,7 +15,7 @@ export default function LandingPage() {
 
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex justify-between items-center relative z-10 animate-slide-in-up">
-        <div className="text-2xl font-bold gradient-text font-display">P2P Delivery</div>
+        <div className="text-2xl font-bold gradient-text font-display">PaarcelMate</div>
         <div className="flex gap-3">
           <Link href="/login">
             <Button variant="ghost" className="hover:scale-105 transition-transform">Log In</Button>
@@ -31,7 +31,7 @@ export default function LandingPage() {
         <div className="animate-scale-in">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6 animate-bounce-subtle">
             <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">India's Smartest P2P Delivery</span>
+            <span className="text-sm font-medium text-primary">India's Smartest Parcel Delivery</span>
           </div>
 
           <h1 className="text-6xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white font-display leading-tight">
@@ -165,7 +165,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="container mx-auto px-4 py-8 mt-16 border-t border-gray-200 dark:border-gray-700 relative z-10">
         <div className="text-center text-gray-600 dark:text-gray-400">
-          <p className="font-medium">&copy; 2026 P2P Delivery. All rights reserved.</p>
+          <p className="font-medium">&copy; 2026 PaarcelMate. All rights reserved.</p>
           <p className="text-sm mt-2">Made with ❤️ in India</p>
         </div>
       </footer>
