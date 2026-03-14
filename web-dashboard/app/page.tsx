@@ -167,6 +167,14 @@ export default function LandingPage() {
         <div className="text-center text-gray-600 dark:text-gray-400">
           <p className="font-medium">&copy; 2026 PaarcelMate. All rights reserved.</p>
           <p className="text-sm mt-2">Made with ❤️ in India</p>
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Built by Harsimran Singh</p>
+            <p className="text-xs mt-1">
+              <a href="tel:+917814469108" className="hover:text-primary transition-colors">+91 7814469108</a>
+              {' '}&bull;{' '}
+              <a href="mailto:imharsimran10@gmail.com" className="hover:text-primary transition-colors">imharsimran10@gmail.com</a>
+            </p>
+          </div>
         </div>
       </footer>
     </div>
