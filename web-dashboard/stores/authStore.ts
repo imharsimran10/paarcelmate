@@ -86,6 +86,28 @@ export const useAuthStore = create<AuthState>()(
         role: state.role,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Sync localStorage tokens with store after rehydration
+        if (state && typeof window !== 'undefined') {
+          const storedAccessToken = localStorage.getItem('access_token');
+          const storedRefreshToken = localStorage.getItem('refresh_token');
+
+          // If tokens exist in localStorage but not in store, update store
+          if (storedAccessToken && !state.accessToken) {
+            state.accessToken = storedAccessToken;
+            state.refreshToken = storedRefreshToken;
+            state.isAuthenticated = true;
+          }
+
+          // If tokens exist in store but not in localStorage, update localStorage
+          if (state.accessToken && !storedAccessToken) {
+            localStorage.setItem('access_token', state.accessToken);
+            if (state.refreshToken) {
+              localStorage.setItem('refresh_token', state.refreshToken);
+            }
+          }
+        }
+      },
     }
   )
 );
