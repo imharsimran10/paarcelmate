@@ -67,8 +67,14 @@ export class DeliveryService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  // Send delivery OTP email to recipient
-  private async sendDeliveryOTPEmail(recipientEmail: string, recipientName: string, otp: string, parcelTitle: string): Promise<void> {
+  // Send delivery OTP email to recipient or sender (fallback)
+  private async sendDeliveryOTPEmail(
+    recipientEmail: string,
+    recipientName: string,
+    otp: string,
+    parcelTitle: string,
+    isSenderFallback: boolean = false
+  ): Promise<void> {
     const isDevelopment = this.config.get('NODE_ENV') === 'development';
 
     if (this.emailService === 'none') {
@@ -79,7 +85,7 @@ export class DeliveryService {
       return;
     }
 
-    const emailHtml = this.getDeliveryOTPEmailTemplate(recipientName, otp, parcelTitle);
+    const emailHtml = this.getDeliveryOTPEmailTemplate(recipientName, otp, parcelTitle, isSenderFallback);
 
     try {
       if (this.emailService === 'smtp') {
@@ -138,7 +144,24 @@ export class DeliveryService {
   }
 
   // Email template for delivery OTP
-  private getDeliveryOTPEmailTemplate(recipientName: string, otp: string, parcelTitle: string): string {
+  private getDeliveryOTPEmailTemplate(
+    recipientName: string,
+    otp: string,
+    parcelTitle: string,
+    isSenderFallback: boolean = false
+  ): string {
+    const greeting = isSenderFallback
+      ? `Hi ${recipientName} (Sender),`
+      : `Hi ${recipientName},`;
+
+    const introText = isSenderFallback
+      ? `Your parcel <strong>"${parcelTitle}"</strong> is ready for delivery! The traveler has arrived at the recipient's location.<br><br><strong>Note:</strong> Since recipient email was not provided, we're sending this code to you as the sender. Please share this code with the recipient so they can provide it to the traveler.`
+      : `Your parcel <strong>"${parcelTitle}"</strong> is ready for delivery! The traveler has arrived at your location.`;
+
+    const instructionText = isSenderFallback
+      ? 'Please share this 6-digit confirmation code with the recipient, who will then provide it to the traveler to complete the delivery:'
+      : 'Please share this 6-digit confirmation code with the traveler to complete the delivery:';
+
     return `
       <!DOCTYPE html>
       <html>
@@ -163,12 +186,12 @@ export class DeliveryService {
                   <!-- Content -->
                   <tr>
                     <td style="padding: 40px 30px;">
-                      <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 24px;">Hi ${recipientName},</h2>
+                      <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 24px;">${greeting}</h2>
                       <p style="color: #666666; font-size: 16px; line-height: 24px; margin: 0 0 20px 0;">
-                        Your parcel <strong>"${parcelTitle}"</strong> is ready for delivery! The traveler has arrived at your location.
+                        ${introText}
                       </p>
                       <p style="color: #666666; font-size: 16px; line-height: 24px; margin: 0 0 30px 0;">
-                        Please share this 6-digit confirmation code with the traveler to complete the delivery:
+                        ${instructionText}
                       </p>
 
                       <!-- OTP Code -->
@@ -233,9 +256,28 @@ export class DeliveryService {
       throw new BadRequestException('Parcel must be in transit to generate delivery OTP');
     }
 
-    // Check if recipient email is available
-    if (!parcel.recipientEmail) {
-      throw new BadRequestException('Recipient email is not available for this parcel');
+    // Determine email recipient: recipient email or fallback to sender email
+    let otpEmail: string;
+    let otpRecipientName: string;
+    let isSenderFallback = false;
+    let otpSentTo: 'recipient' | 'sender';
+
+    if (parcel.recipientEmail && parcel.recipientEmail.trim() !== '') {
+      // Primary: Use recipient email
+      otpEmail = parcel.recipientEmail;
+      otpRecipientName = parcel.recipientName;
+      otpSentTo = 'recipient';
+      isSenderFallback = false;
+    } else {
+      // Fallback: Use sender email
+      if (!parcel.sender.email) {
+        throw new BadRequestException('Neither recipient nor sender email is available for OTP delivery');
+      }
+      otpEmail = parcel.sender.email;
+      otpRecipientName = `${parcel.sender.firstName} ${parcel.sender.lastName}`;
+      otpSentTo = 'sender';
+      isSenderFallback = true;
+      this.logger.warn(`Recipient email not available for parcel ${parcel.id}. Using sender email as fallback.`);
     }
 
     // Generate OTP
@@ -256,16 +298,19 @@ export class DeliveryService {
     if (isDevelopment) {
       this.logger.debug('='.repeat(60));
       this.logger.debug(`📦 DELIVERY OTP FOR PARCEL: ${parcel.title}`);
-      this.logger.debug(`📧 Recipient: ${parcel.recipientName} (${parcel.recipientEmail})`);
+      this.logger.debug(`📧 ${isSenderFallback ? 'Sender (Fallback)' : 'Recipient'}: ${otpRecipientName} (${otpEmail})`);
       this.logger.debug(`🔐 OTP CODE: ${otp}`);
       this.logger.debug(`⏰ Valid for: 10 minutes`);
+      if (isSenderFallback) {
+        this.logger.debug(`⚠️  Note: Recipient email not available, sent to sender`);
+      }
       this.logger.debug('='.repeat(60));
     }
 
     // Send OTP via email
     try {
-      await this.sendDeliveryOTPEmail(parcel.recipientEmail, parcel.recipientName, otp, parcel.title);
-      this.logger.log(`Delivery OTP sent to ${parcel.recipientEmail} for parcel ${parcel.id}`);
+      await this.sendDeliveryOTPEmail(otpEmail, otpRecipientName, otp, parcel.title, isSenderFallback);
+      this.logger.log(`Delivery OTP sent to ${otpEmail} (${otpSentTo}) for parcel ${parcel.id}`);
     } catch (error) {
       this.logger.error(`Failed to send delivery OTP email: ${error.message}`, error.stack);
       // In development, don't fail - OTP is already logged
@@ -275,14 +320,20 @@ export class DeliveryService {
     }
 
     // Mask email for security (show first 2 chars and last part of domain)
-    const emailParts = parcel.recipientEmail.split('@');
+    const emailParts = otpEmail.split('@');
     const maskedEmail = emailParts[0].slice(0, 2) + '***@' + emailParts[1];
 
     return {
-      message: 'Delivery OTP generated and sent to recipient email',
-      recipientEmail: maskedEmail,
+      message: isSenderFallback
+        ? 'Delivery OTP generated and sent to sender email (recipient email not available)'
+        : 'Delivery OTP generated and sent to recipient email',
+      sentTo: otpSentTo,
+      email: maskedEmail,
       recipientName: parcel.recipientName,
       expiresAt: otpExpiry,
+      note: isSenderFallback
+        ? 'Recipient email was not provided. OTP sent to sender. Please share this code with the recipient.'
+        : undefined,
     };
   }
 
